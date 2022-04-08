@@ -1,9 +1,19 @@
 #include "bpf/bpfapi/helpers.h"
 
-static const char print_str[] = "Consume\n";
+#define SHARED_KEY 0x50
 
-int consume(void)
+static const char print_str[] = "Consume: %d\n";
+
+void consume(void)
 {
-   bpf_printf(print_str);
-   return 0;
+   uint32_t value;
+   bpf_fetch_global(SHARED_KEY, &value);
+
+   if (value > 0) {
+      value--;
+   }
+   
+   bpf_store_global(SHARED_KEY, value);
+
+   bpf_printf(print_str, value);
 }
