@@ -10,6 +10,7 @@ RIOTBASE ?= $(CURDIR)/../RIOT
 # Include the bpf module
 USEMODULE += bpf
 USEMODULE += xtimer
+USEMODULE += ztimer_usec
 
 # Use the compiled increment.bin as binary object in the built
 BLOBS += container/produce/produce.bin
