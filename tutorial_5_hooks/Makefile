@@ -12,7 +12,8 @@ USEMODULE += bpf
 USEMODULE += xtimer
 
 # Use the compiled increment.bin as binary object in the built
-BLOBS += fc/increment.bin
+BLOBS += container/produce/produce.bin
+BLOBS += container/consume/consume.bin
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the
