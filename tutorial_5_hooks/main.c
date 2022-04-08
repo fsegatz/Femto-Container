@@ -17,7 +17,6 @@
  *
  * @}
  */
-#define N 1
 
 #include <stdio.h>
 
@@ -26,45 +25,50 @@
 #include "blob/container/produce/produce.bin.h"
 
 #include "thread.h"
-#include "xtimer.h"
+#include "sched.h"
+
+#include "ztimer.h"
 #include "timex.h"
 
-char container_0_thread_stack[THREAD_STACKSIZE_MAIN];
-char container_1_thread_stack[THREAD_STACKSIZE_MAIN];
+static const uint32_t us = 10000;
 
-void *container_thread_0(void *arg) {
+void *producer(void *arg) {
     bpf_t * bpf = (bpf_t *) arg;
 
     uint64_t ctx = 0;
     int64_t result = 0;
+
     while (1) {
-        puts("Executing container hook 0...");
+        // puts("Executing container hook 0...");
         bpf_execute_ctx(bpf, &ctx, sizeof(ctx), &result);
-        puts("Hook 0 executed.");
-        xtimer_sleep(N);
+        // puts("Hook 0 executed.");
+        ztimer_sleep(ZTIMER_USEC, us);
     }
 
     return NULL;
 }
 
-void *container_thread_1(void *arg) {
+void *consumer(void *arg) {
     bpf_t * bpf = (bpf_t *) arg;
 
     uint64_t ctx = 0;
     int64_t result = 0;
 
     while (1) {
-        puts("Executing container hook 1...");
-        // bpf_hook_execute(BPF_HOOK_TRIGGER_NETIF, NULL, sizeof(NULL), NULL);
+        // puts("Executing container hook 1...");
         bpf_execute_ctx(bpf, &ctx, sizeof(ctx), &result);
-        puts("Hook 1 executed.");
-        xtimer_sleep(N);        
+        // puts("Hook 1 executed.");
+        ztimer_sleep(ZTIMER_USEC, us+100);    
     }
 }
 
 /* Pre-allocated stack for the virtual machine */
 static uint8_t _stack_consume[512] = { 0 };
 static uint8_t _stack_produce[512] = { 0 };
+
+#ifndef WORKER_STACKSIZE
+#define WORKER_STACKSIZE (THREAD_STACKSIZE_DEFAULT+THREAD_EXTRA_STACKSIZE_PRINTF)
+#endif
 
 int main(void)
 {
@@ -93,33 +97,20 @@ int main(void)
     bpf_setup(&bpf_produce);
 
 
-    // bpf_execute_ctx(&bpf_produce, NULL, sizeof(NULL), NULL);
-    // int res = bpf_execute_ctx(&bpf, &ctx, sizeof(ctx), &result);
-
-    // /* Connect containers to two different hooks*/
-    // bpf_hook_t hook_consume = {
-    //     .application = &bpf_consume,
-    // };
-
-    // bpf_hook_install(&hook_consume, BPF_HOOK_TRIGGER_NETIF); 
-    
-
-    // bpf_hook_t hook_produce = {
-    //     .application = &bpf_produce,
-    // };
-
-    // bpf_hook_install(&hook_produce, BPF_HOOK_SCHED);
-
-
-
     /* Create threads for containers */
-    thread_create(container_0_thread_stack, sizeof(container_0_thread_stack),
-                  THREAD_PRIORITY_MAIN - 1, THREAD_CREATE_STACKTEST,
-                  container_thread_0, &bpf_produce, "container_thread_0");
+    {
+        static char stack[WORKER_STACKSIZE];
+        thread_create(stack, sizeof(stack),
+                    THREAD_PRIORITY_MAIN - 1, THREAD_CREATE_STACKTEST,
+                    producer, &bpf_produce, "producer");
+    }
 
-    thread_create(container_1_thread_stack, sizeof(container_1_thread_stack),
-                  THREAD_PRIORITY_MAIN - 1, THREAD_CREATE_STACKTEST,
-                  container_thread_1, &bpf_consume, "container_thread_1");
+    {
+        static char stack[WORKER_STACKSIZE];
+        thread_create(stack, sizeof(stack),
+                    THREAD_PRIORITY_MAIN - 1, THREAD_CREATE_STACKTEST,
+                    consumer, &bpf_consume, "consumer");    
+    }
 
     return 0;
 }
