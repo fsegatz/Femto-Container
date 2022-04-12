@@ -14,13 +14,17 @@ static uint8_t stack_system[512] = { 0 };
 
 static void *system_thread(void *arg) {
     bpf_t * bpf = (bpf_t *) arg;
+    bpf->flags |= BPF_CONFIG_NO_RETURN; //bugfix
 
     uint64_t ctx = 0;
     int64_t result = 1;
 
     while (result) {
         puts("Executing container hook 0...");
-        bpf_execute_ctx(bpf, &ctx, sizeof(ctx), &result);
+        int err = bpf_execute_ctx(bpf, &ctx, sizeof(ctx), &result);
+        if(err) {
+            printf("Errorcode: %d\n", err);
+        }
         // puts("Hook 0 executed.");
         ztimer_sleep(ZTIMER_USEC, 1000000);
     }

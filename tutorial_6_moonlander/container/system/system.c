@@ -85,32 +85,29 @@ int64_t system(void) {
         bpf_store_global(LAST_TIME, bpf_now_ms());
     }
     
+    uint32_t continueFlag = 0;
     if(alt != 0) {
         bpf_printf(hdr_str);
         bpf_printf(newline);
-        bpf_printf(val_str, last_time);
+        bpf_printf(val_str, bpf_now_ms()/1000);
         bpf_printf(val_str, (acc >> REF_FACT));
         bpf_printf(val_str, (vel >> REF_FACT));
         bpf_printf(val_str, (alt >> REF_FACT));
         bpf_printf(newline);
-        return 1; 
+        continueFlag = 1;
+    } else if ((vel >> REF_FACT) <= 1) {
+        bpf_printf(finish_str1);    
+    } else if ((vel >> REF_FACT) <= 5) {
+        bpf_printf(finish_str2);
+    } else if (vel <= 10) {
+        bpf_printf(finish_str3);
+    } else if (vel <= 18) {
+        bpf_printf(finish_str4);
+    } else if (vel <= 27) {
+        bpf_printf(finish_str5);
     } else {
-        bpf_printf(finish_str1);
-        // if (vel <= 1) {
-        //     bpf_printf(finish_str1);
-        // } else if (vel <= 5) {
-        //     bpf_printf(finish_str2);
-        // } else if (vel <= 10) {
-        //     bpf_printf(finish_str3);
-        // } else if (vel <= 18) {
-        //     bpf_printf(finish_str4);
-        // } else if (vel <= 27) {
-        //     bpf_printf(finish_str5);
-        // } else {
-        //     //uint32_t impact = (vel * 19 / 100) >> REF_FACT;
-        //     //bpf_printf(finish_str6, impact);
-        //     bpf_printf(finish_str5);
-        // }
-        return 0;
+        uint32_t impact = (vel * 19 / 100) >> REF_FACT;
+        bpf_printf(finish_str6, impact);
     }
+    return continueFlag;
 }
