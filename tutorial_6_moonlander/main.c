@@ -27,7 +27,7 @@ static void *fuel_thread(void *arg) {
         if(err) {
             printf("Errorcode: %d\n", err);
         }
-        ztimer_sleep(ZTIMER_USEC, 5000000);
+        ztimer_sleep(ZTIMER_USEC, 10000000);
     }
     return NULL;
 }
@@ -46,7 +46,7 @@ static void *system_thread(void *arg) {
             printf("Errorcode: %d\n", err);
         }
         // puts("Hook 0 executed.");
-        ztimer_sleep(ZTIMER_USEC, 1000000);
+        ztimer_sleep(ZTIMER_USEC, 500000);
     }
     
     return NULL;

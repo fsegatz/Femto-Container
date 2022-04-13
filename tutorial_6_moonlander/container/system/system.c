@@ -3,7 +3,7 @@
 
 #define DEBUG 0
 
-#define INIT_ALT (10000 << REF_FACT)  //m
+#define INIT_ALT (64000 << REF_FACT)  //m
 // #define INIT_ALT (200000 << REF_FACT)  //m
 #define INIT_VEL (1600 << REF_FACT) //m/s
 #define INIT_ACC ((8 << REF_FACT)/5) //m/s^2 8/5=1.6
@@ -67,10 +67,15 @@ int64_t system(void) {
         bpf_fetch_global(FUEL_RATE, &fuel_rate);
         bpf_fetch_global(LAST_TIME, &last_time);
 
-        uint32_t time_diff = ((((bpf_now_ms() - last_time) << REF_FACT) / 1000)) >> REF_FACT;
+        uint32_t time_diff = (((bpf_now_ms() - last_time) << REF_FACT)) >> REF_FACT;
+
+#if DEBUG
+    bpf_printf(val_str, time_diff);
+    bpf_printf(newline);
+#endif //DEBUG
 
         /* FUEL CONSUMPTION */
-        int fuel_diff = fuel - time_diff * fuel_rate;
+        int fuel_diff = fuel - (time_diff * fuel_rate)/1000;
         if (fuel_diff > 0) { // check if still enought fuel in tank
             fuel = fuel_diff;
         } else {
@@ -80,16 +85,26 @@ int64_t system(void) {
 
 
         /* VELOCITY calculation */
-        vel += acc * time_diff;
-        vel -= (1 * ((time_diff * fuel_rate) << REF_FACT)) / 100;
+        int vel_diff = vel + (acc * time_diff)/1000;
+        vel_diff -= (1 * ((time_diff * fuel_rate) << REF_FACT)) / 100000;
+        if(vel_diff >= 0) {
+            vel = vel_diff;
+        } else {
+            vel = 0;
+        }
 
         /* HEIGHT calculation */
-        int diff = alt - vel * time_diff ;
-        if (diff > 0) {
-            alt = diff;
+        int alt_diff = alt - (vel * time_diff)/1000 ;
+        if (alt_diff >= 0) {
+            alt = alt_diff;
         } else {
             alt = 0;
         }
+
+#if DEBUG
+    bpf_printf(val_str, alt_diff);
+    bpf_printf(newline);
+#endif //DEBUG
 
         bpf_store_global(ALT, alt);
         bpf_store_global(VEL, vel);
@@ -107,7 +122,7 @@ int64_t system(void) {
     } else if(alt != 0) {
         bpf_printf(hdr_str);
         bpf_printf(newline);
-        bpf_printf(val_str, bpf_now_ms()/1000);
+        bpf_printf(val_str, bpf_now_ms());
         bpf_printf(val_str, (vel >> REF_FACT));
         bpf_printf(val_str, (alt >> REF_FACT));
         bpf_printf(val_str, (fuel >> REF_FACT));
