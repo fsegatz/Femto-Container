@@ -5,3 +5,8 @@
 #define VEL         0x04
 #define ACC         0x05
 #define LAST_TIME   0x06
+#define FUEL        0x07
+#define FUEL_RATE   0x08
+
+// global defines
+#define REF_FACT 8

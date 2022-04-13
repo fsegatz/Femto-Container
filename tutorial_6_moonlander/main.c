@@ -15,17 +15,19 @@ static uint8_t stack_system[512] = { 0 };
 static uint8_t stack_fuel[512] = { 0 };
 
 static void *fuel_thread(void *arg) {
-    bpf_t * bpf = (bpf_t *) arg;
-    uint64_t ctx = 0;
+    bpf_t *bpf = (bpf_t *) arg;
+    uint32_t ctx = 0;
     int64_t result = 1;
 
     while (result) {
-        puts("Executing container hook 1...");
+        //puts("Executing container hook 1...");
+        printf("Enter fuel rate: ");
+        scanf("%u", &ctx);
         int err = bpf_execute_ctx(bpf, &ctx, sizeof(ctx), &result);
         if(err) {
             printf("Errorcode: %d\n", err);
         }
-        ztimer_sleep(ZTIMER_USEC, 500000);
+        ztimer_sleep(ZTIMER_USEC, 5000000);
     }
     return NULL;
 }
@@ -38,7 +40,7 @@ static void *system_thread(void *arg) {
     int64_t result = 1;
 
     while (result) {
-        puts("Executing container hook 0...");
+        //puts("Executing container hook 0...");
         int err = bpf_execute_ctx(bpf, &ctx, sizeof(ctx), &result);
         if(err) {
             printf("Errorcode: %d\n", err);
