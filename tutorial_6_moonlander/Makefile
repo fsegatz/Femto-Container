@@ -14,7 +14,7 @@ USEMODULE += xtimer
 
 # Use the compiled increment.bin as binary object in the built
 BLOBS += container/system/system.bin
-
+BLOBS += container/fuel/fuel.bin
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the

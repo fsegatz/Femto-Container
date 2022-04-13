@@ -46,11 +46,7 @@ int64_t system(void) {
         bpf_store_global(SYS_INIT, 1);
         bpf_store_global(SYS_PAUSE, 1);
     } else if (pauseFlag == 0) {
-        bpf_fetch_global(ALT, &alt);
-        bpf_fetch_global(VEL, &vel);
-        bpf_fetch_global(ACC, &acc);
-        bpf_store_global(LAST_TIME, last_time);
-        bpf_store_global(SYS_PAUSE, 1);
+        bpf_store_global(LAST_TIME, bpf_now_ms());
     } else {
         bpf_fetch_global(ALT, &alt);
         bpf_fetch_global(VEL, &vel);
@@ -86,7 +82,9 @@ int64_t system(void) {
     }
     
     uint32_t continueFlag = 0;
-    if(alt != 0) {
+    if(pauseFlag == 0) {
+        continueFlag = 1;
+    } else if(alt != 0) {
         bpf_printf(hdr_str);
         bpf_printf(newline);
         bpf_printf(val_str, bpf_now_ms()/1000);
